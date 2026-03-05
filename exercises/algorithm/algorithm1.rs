@@ -2,7 +2,6 @@
 	single linked list merge
 	This problem requires you to merge two ordered singly linked lists into one ordered singly linked list
 */
-// I AM NOT DONE
 
 use std::fmt::{self, Display, Formatter};
 use std::ptr::NonNull;
@@ -70,12 +69,52 @@ impl<T> LinkedList<T> {
         }
     }
 	pub fn merge(list_a:LinkedList<T>,list_b:LinkedList<T>) -> Self
+    where T:PartialOrd
 	{
-		//TODO
-		Self {
-            length: 0,
-            start: None,
-            end: None,
+		let res_length=list_a.length+list_b.length;
+        let mut res_start=None;
+        let mut res_end:Option<NonNull<Node<T>>>=None;
+
+        let mut p1=list_a.start;
+        let mut p2=list_b.start;
+
+        //辅助函数，进行单个节点合并
+        let mut attach=|node_ptr:NonNull<Node<T>>| {
+            unsafe{
+                if let Some(t_ptr)=res_end {
+                    (*t_ptr.as_ptr()).next=Some(node_ptr);
+                }else{
+                    res_start=Some(node_ptr);
+                }
+                res_end=Some(node_ptr);
+                (*node_ptr.as_ptr()).next=None;
+            }
+        };
+
+        // 主循环合并
+        while let (Some(n1),Some(n2))=(p1,p2) {
+            unsafe{
+                if n1.as_ref().val< n2.as_ref().val {
+                    p1=n1.as_ref().next;
+                    attach(n1);
+                }else{
+                    p2=n2.as_ref().next;
+                    attach(n2);
+                }
+            }
+        }
+        //合并剩余部分
+        let mut remaining=if p1.is_some() {p1}else{p2};
+        while let Some(n)=remaining {
+            unsafe {
+                remaining=n.as_ref().next;
+                attach(n);
+            }
+        }
+        LinkedList {
+            length:res_length,
+            start:res_start,
+            end:res_end,
         }
 	}
 }
